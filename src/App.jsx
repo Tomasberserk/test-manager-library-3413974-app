@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Users, BookMarked, AlertOctagon, BarChart3, 
-  UserPlus, LogOut, ShieldCheck, Library, Menu, X 
+  UserPlus, LogOut, ShieldCheck, Library, Menu, X, Globe 
 } from 'lucide-react';
 import { LoginView } from './components/LoginView';
 import { BooksView } from './components/BooksView';
@@ -124,8 +124,17 @@ export default function App() {
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-slate-800">
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-slate-800 space-y-1">
+          <a
+            href="http://localhost:3000"
+            target="_blank"
+            rel="noreferrer"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-indigo-400 hover:bg-slate-800/60 transition"
+          >
+            <Globe className="w-4 h-4 text-indigo-400" />
+            <span>Sitio Público (Landing)</span>
+          </a>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
