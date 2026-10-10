@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { Alert } from './Alert';
-import { UserPlus, Shield, Users, CheckCircle2, KeyRound, UserCheck } from 'lucide-react';
+import { UserPlus, Shield, Users, CheckCircle2, KeyRound, UserCheck, RefreshCw } from 'lucide-react';
 
 export function LibrariansView() {
   const [users, setUsers] = useState([]);
@@ -36,10 +36,10 @@ export function LibrariansView() {
 
     try {
       const data = await api.createLibrarian({ username, password });
-      setSuccess(`Bibliotecario «${data.username}» dado de alta exitosamente con rol librarian.`);
+      setSuccess(`Bibliotecario «${data.username}» creado exitosamente con rol librarian.`);
       setUsername('');
       setPassword('');
-      loadUsers();
+      await loadUsers();
     } catch (err) {
       setError(err);
     } finally {
@@ -50,24 +50,24 @@ export function LibrariansView() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Personal y Alta de Bibliotecarios</h2>
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Gestión de Bibliotecarios y Personal</h2>
         <p className="text-sm text-slate-500 mt-1">
-          Gestión de accesos y creación de cuentas operativas para el personal bibliotecario (según HU-02).
+          Crea nuevas cuentas operativas para bibliotecarios (HU-02) y consulta los usuarios activos en el sistema.
         </p>
       </div>
 
       <Alert error={error} message={success} onClose={() => { setError(null); setSuccess(''); }} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Formulario de Alta */}
+        {/* Formulario de Crear Bibliotecario */}
         <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900">Dar de Alta Bibliotecario</h3>
-              <p className="text-xs text-slate-500">Crea credenciales con rol restringido</p>
+              <h3 className="font-semibold text-slate-900">Crear Nuevo Bibliotecario</h3>
+              <p className="text-xs text-slate-500">Credenciales con rol operativo librarian</p>
             </div>
           </div>
 
@@ -79,7 +79,7 @@ export function LibrariansView() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="ej: ana_garcia"
+                placeholder="ej: carlos_mendoza"
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <p className="text-xs text-slate-400 mt-1">
@@ -118,7 +118,7 @@ export function LibrariansView() {
               className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <UserPlus className="w-4 h-4" />
-              {submitting ? 'Registrando...' : 'Dar de Alta Bibliotecario'}
+              {submitting ? 'Creando cuenta...' : 'Crear Bibliotecario'}
             </button>
           </form>
         </div>
@@ -131,14 +131,15 @@ export function LibrariansView() {
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">Usuarios Dados de Alta</h3>
-                <p className="text-xs text-slate-500">{users.length} cuenta(s) registradas en el sistema</p>
+                <h3 className="font-semibold text-slate-900">Usuarios Activos en el Sistema</h3>
+                <p className="text-xs text-slate-500">{users.length} cuenta(s) registradas</p>
               </div>
             </div>
             <button
               onClick={loadUsers}
-              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition"
+              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition flex items-center gap-1.5"
             >
+              <RefreshCw className="w-3.5 h-3.5" />
               Actualizar
             </button>
           </div>
@@ -146,7 +147,7 @@ export function LibrariansView() {
           {loadingUsers ? (
             <div className="p-8 text-center text-sm text-slate-400">Cargando personal...</div>
           ) : users.length === 0 ? (
-            <div className="p-8 text-center text-sm text-slate-400">No hay usuarios dados de alta aún.</div>
+            <div className="p-8 text-center text-sm text-slate-400">No hay usuarios registrados aún.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -154,7 +155,7 @@ export function LibrariansView() {
                   <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-400 font-semibold text-xs tracking-wider uppercase">
                     <th className="px-6 py-3.5">Usuario</th>
                     <th className="px-6 py-3.5">Rol</th>
-                    <th className="px-6 py-3.5">Fecha de Alta</th>
+                    <th className="px-6 py-3.5">Permisos</th>
                     <th className="px-6 py-3.5 text-right">Estado</th>
                   </tr>
                 </thead>
@@ -170,7 +171,7 @@ export function LibrariansView() {
                           </div>
                           <div>
                             <span className="font-semibold text-slate-900 block">{u.username}</span>
-                            <span className="text-xs text-slate-400">ID: {u.id.substring(0, 8)}...</span>
+                            <span className="text-xs text-slate-400 font-mono">ID: {u.id.substring(0, 8)}...</span>
                           </div>
                         </div>
                       </td>
@@ -185,15 +186,11 @@ export function LibrariansView() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs text-slate-500">
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString('es-CO', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        }) : 'Semilla inicial'}
+                        {u.role === 'admin' ? 'Acceso total y reportes' : 'Préstamos y devoluciones'}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                           Activo
                         </span>
                       </td>

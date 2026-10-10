@@ -3,7 +3,7 @@ import { api } from '../api/client';
 import { Alert } from './Alert';
 import { 
   BookMarked, Plus, Search, RotateCcw, CheckCircle2, 
-  Clock, AlertCircle, Trash2, Calendar, User 
+  Clock, AlertCircle, Trash2, Calendar, User, X 
 } from 'lucide-react';
 
 export function LoansView() {

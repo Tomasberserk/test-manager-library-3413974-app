@@ -47,7 +47,7 @@ export default function App() {
     { id: 'overdue', label: 'Libros Vencidos', icon: AlertOctagon },
     ...(isAdmin ? [
       { id: 'reports', label: 'Reporte: Más Prestados', icon: BarChart3 },
-      { id: 'librarians', label: 'Alta Bibliotecarios', icon: UserPlus },
+      { id: 'librarians', label: 'Bibliotecarios', icon: UserPlus },
     ] : []),
   ];
 
