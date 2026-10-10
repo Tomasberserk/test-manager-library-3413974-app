@@ -19,6 +19,8 @@ export function LoansView() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedBookIds, setSelectedBookIds] = useState(['']);
+  const [modalError, setModalError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -65,14 +67,15 @@ export function LoansView() {
 
   const handleCreateLoan = async (e) => {
     e.preventDefault();
-    setError(null);
+    setModalError(null);
 
     const validBookIds = selectedBookIds.filter(Boolean);
     if (validBookIds.length === 0) {
-      setError({ message: 'Debe seleccionar al menos un libro para el préstamo.' });
+      setModalError({ message: 'Debe seleccionar al menos un libro para el préstamo.' });
       return;
     }
 
+    setSubmitting(true);
     try {
       await api.createLoan({
         member_id: selectedMemberId,
@@ -81,10 +84,13 @@ export function LoansView() {
       setShowCreateModal(false);
       setSelectedMemberId('');
       setSelectedBookIds(['']);
+      setModalError(null);
       setSuccess('Préstamo registrado exitosamente.');
       loadData();
     } catch (err) {
-      setError(err);
+      setModalError(err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -122,6 +128,7 @@ export function LoansView() {
           onClick={() => {
             setSelectedMemberId(members[0]?.id || '');
             setSelectedBookIds(['']);
+            setModalError(null);
             setShowCreateModal(true);
           }}
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm shadow-sm transition"
@@ -264,13 +271,35 @@ export function LoansView() {
       {/* Create Loan Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-100">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-lg text-slate-900">Registrar Nuevo Préstamo</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600">
+              <button 
+                onClick={() => { setShowCreateModal(false); setModalError(null); }} 
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {modalError && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold">{modalError.message || 'Error al procesar el préstamo'}</p>
+                  {modalError.details && modalError.details.length > 0 && (
+                    <ul className="mt-1 list-disc list-inside space-y-0.5 text-rose-700">
+                      {modalError.details.map((d, i) => (
+                        <li key={i}>
+                          {d.field ? <span className="font-mono font-medium">{d.field}: </span> : null}
+                          {d.issue}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleCreateLoan} className="space-y-4">
               <div>
@@ -278,25 +307,36 @@ export function LoansView() {
                 <select
                   required
                   value={selectedMemberId}
-                  onChange={(e) => setSelectedMemberId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedMemberId(e.target.value);
+                    setModalError(null);
+                  }}
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Seleccione un socio</option>
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.full_name} (Doc: {m.document_number} — {m.active_loans} activos)
+                      {m.full_name} (Doc: {m.document_number} — {m.active_loans} activos{m.has_overdue ? ' — ⚠️ CON MORA' : ''})
                     </option>
                   ))}
                 </select>
                 {selectedMember && (
-                  <p className="text-xs text-slate-500 mt-1">
-                    Préstamos sin devolver: <span className="font-semibold text-indigo-600">{selectedMember.active_loans} de 3 máx</span>.
-                    {selectedMember.active_loans >= 3 && (
-                      <span className="text-rose-600 font-semibold block mt-0.5">
-                        ⚠️ Este socio ha alcanzado el límite máximo.
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-slate-500">
+                      Préstamos sin devolver: <span className="font-semibold text-indigo-600">{selectedMember.active_loans} de 3 máx</span>.
+                    </p>
+                    {selectedMember.has_overdue && (
+                      <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs font-medium text-rose-700 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>Este socio tiene libros vencidos pendientes. Debe devolverlos antes de solicitar nuevos préstamos.</span>
+                      </div>
+                    )}
+                    {!selectedMember.has_overdue && selectedMember.active_loans >= 3 && (
+                      <span className="text-rose-600 font-semibold block text-xs">
+                        ⚠️ Este socio ha alcanzado el límite máximo de 3 libros.
                       </span>
                     )}
-                  </p>
+                  </div>
                 )}
               </div>
 
@@ -358,16 +398,18 @@ export function LoansView() {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 border text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50"
+                  onClick={() => { setShowCreateModal(false); setModalError(null); }}
+                  className="px-4 py-2 border text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm"
+                  disabled={submitting || selectedMember?.has_overdue || selectedMember?.active_loans >= 3}
+                  className="px-4 py-2 bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition flex items-center gap-2"
                 >
-                  Confirmar Préstamo
+                  {submitting && <Clock className="w-3.5 h-3.5 animate-spin" />}
+                  {submitting ? 'Confirmando...' : 'Confirmar Préstamo'}
                 </button>
               </div>
             </form>
