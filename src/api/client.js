@@ -93,6 +93,7 @@ export const api = {
   getCoverUrl: (id) => `${API_BASE}/books/${id}/cover`,
 
   // Users (Admin only)
+  getUsers: () => apiRequest('/users'),
   createLibrarian: (userData) =>
     apiRequest('/users', {
       method: 'POST',
